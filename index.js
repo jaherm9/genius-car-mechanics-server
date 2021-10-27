@@ -1,5 +1,6 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
 const cors = require('cors');
 require('dotenv').config();
 
@@ -21,9 +22,23 @@ async function run(){
         await client.connect();
         const database = client.db('carMechanic');
         const serviecesCollection = database.collection('services');
+        // GEP API
+        app.get('/services', async(req, res) => {
+            const cursor = serviecesCollection.find({});
+            const services = await cursor.toArray();
+            res.send(services)
+        })
 
+        //GET Single Service
+        app.get('/services/:id', async(req, res) =>{
+            const id = req.params.id;
+            console.log('getting specific service', id);
+            const query = {_id:ObjectId(id) };
+            const service = await serviecesCollection.findOne(query);
+            res.json(service);
+        })
         //POST API
-        app.post('/services', async(req, res) =>{
+        app.post('/services', async(req, res) => {
             const service = req.body;
             console.log('hit the post api', service);
 
@@ -31,7 +46,17 @@ async function run(){
             console.log(result)
             res.send(result)
         })
+
+        // DELETE API
+        app.delete('/services/:id', async(req, res) =>{
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)};
+            const result = await serviecesCollection.deleteOne(query);
+            res.json(result);
+        })
     }
+    
+
     finally{
         // await client.close();
     }
